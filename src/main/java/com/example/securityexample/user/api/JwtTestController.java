@@ -12,4 +12,5 @@ public class JwtTestController {
     String test() {
         return "test";
     }
+
 }
