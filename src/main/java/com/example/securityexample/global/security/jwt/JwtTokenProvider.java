@@ -1,6 +1,8 @@
 package com.example.securityexample.global.security.jwt;
 
 
+import com.example.securityexample.user.application.CustomUserDetailsService;
+import com.example.securityexample.user.domain.MemberUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -50,8 +52,12 @@ public class JwtTokenProvider {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
+        MemberUserDetails memberUserDetails = (MemberUserDetails) authentication.getPrincipal();
+        String nickname = memberUserDetails.getMember().getNickname();
+
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
+                .claim("nickname", nickname)
                 .claim("auth", authorities)
                 .signWith(key, SignatureAlgorithm.HS512)
                 .setExpiration(expireTime)
