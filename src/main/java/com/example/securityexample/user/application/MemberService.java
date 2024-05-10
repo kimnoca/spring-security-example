@@ -5,6 +5,7 @@ import com.example.securityexample.global.security.jwt.JwtTokenDto;
 import com.example.securityexample.global.security.jwt.JwtTokenProvider;
 import com.example.securityexample.user.dao.MemberRepository;
 import com.example.securityexample.user.domain.Member;
+import com.example.securityexample.user.domain.Role;
 import com.example.securityexample.user.dto.LoginRequestDto;
 
 import com.example.securityexample.user.dto.RegisterRequestDto;
@@ -30,8 +31,9 @@ public class MemberService {
 
     public JwtTokenDto login(LoginRequestDto loginRequestDto) {
 
+
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                loginRequestDto.getUsername(),
+                loginRequestDto.getEmail(),
                 loginRequestDto.getPassword());
 
         Authentication authentication = authenticationManagerBuilder.getObject()
@@ -44,10 +46,12 @@ public class MemberService {
 
     @Transactional
     public Member signUp(RegisterRequestDto registerRequestDto) {
+
         Member member = Member.builder()
-                .memberId(registerRequestDto.getUsername())
+                .email(registerRequestDto.getEmail())
                 .password(passwordEncoder.encode(registerRequestDto.getPassword()))
-                .authorities(Collections.singleton("USER"))
+                .nickname(registerRequestDto.getNickname())
+                .role(Role.ROLE_USER)
                 .build();
 
         return memberRepository.save(member);
