@@ -2,17 +2,14 @@ package com.example.securityexample.user.domain;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-
-@AllArgsConstructor
 @Getter
+@AllArgsConstructor
 public class MemberUserDetails implements UserDetails {
 
     Member member;
@@ -52,3 +49,4 @@ public class MemberUserDetails implements UserDetails {
         return true;
     }
 }
+

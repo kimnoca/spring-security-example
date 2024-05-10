@@ -5,11 +5,10 @@ import com.example.securityexample.global.security.jwt.JwtTokenDto;
 import com.example.securityexample.global.security.jwt.JwtTokenProvider;
 import com.example.securityexample.user.dao.MemberRepository;
 import com.example.securityexample.user.domain.Member;
-import com.example.securityexample.user.domain.Role;
+import com.example.securityexample.user.type.Role;
 import com.example.securityexample.user.dto.LoginRequestDto;
-
 import com.example.securityexample.user.dto.RegisterRequestDto;
-import java.util.Collections;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
