@@ -18,9 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final MemberService memberService;
-
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<?> newLogin(@RequestBody LoginRequestDto loginRequestDto) {
         return ResponseEntity.status(HttpStatus.OK).body(memberService.login(loginRequestDto));
     }
 

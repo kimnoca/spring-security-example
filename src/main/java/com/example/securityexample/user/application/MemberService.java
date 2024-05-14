@@ -9,11 +9,14 @@ import com.example.securityexample.user.type.Role;
 import com.example.securityexample.user.dto.LoginRequestDto;
 import com.example.securityexample.user.dto.RegisterRequestDto;
 
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,24 +26,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class MemberService {
 
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
 
     public JwtTokenDto login(LoginRequestDto loginRequestDto) {
+        Optional<Member> member = memberRepository.findByEmail(loginRequestDto.getEmail());
 
+        if (member.isEmpty()) {
+            throw new UsernameNotFoundException("존재 하지 않는 유저 입니다.");
+        }
 
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                loginRequestDto.getEmail(),
-                loginRequestDto.getPassword());
+        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.get().getPassword())) {
+            throw new BadCredentialsException("올바르지 않은 비밀번호 입니다.");
+        }
 
-        Authentication authentication = authenticationManagerBuilder.getObject()
-                .authenticate(authenticationToken); // CustomUserDetailsService 에 정의한 loadUserByUsername 실행
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        return jwtTokenProvider.createToken(authentication);
-
+        return jwtTokenProvider.createToken(loginRequestDto.getEmail(), member.get().getNickname());
     }
 
     @Transactional
