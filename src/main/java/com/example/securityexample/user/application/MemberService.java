@@ -34,35 +34,28 @@ public class MemberService {
 
     //TODO : Exception Global Handler 구현
 
-    @Transactional
     public Member signUp(RegisterRequestDto registerRequestDto) {
 
-        Member member = Member.builder()
-                .email(registerRequestDto.getEmail())
+        Member member = Member.builder().email(registerRequestDto.getEmail())
                 .password(passwordEncoder.encode(registerRequestDto.getPassword()))
-                .nickname(registerRequestDto.getNickname())
-                .role(Role.ROLE_USER)
-                .build();
+                .nickname(registerRequestDto.getNickname()).role(Role.ROLE_USER).build();
 
         return memberRepository.save(member);
     }
 
     public JwtTokenDto login(LoginRequestDto loginRequestDto) {
-        Optional<Member> member = memberRepository.findByEmail(loginRequestDto.getEmail());
 
-        if (member.isEmpty()) {
-            throw new UsernameNotFoundException("존재 하지 않는 유저 입니다.");
-        }
+        Member member = memberRepository.findByEmail(loginRequestDto.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("존재 하지 않는 유저 입니다."));
 
-        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.get().getPassword())) {
+        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
             throw new BadCredentialsException("올바르지 않은 비밀번호 입니다.");
         }
-        JwtTokenDto jwtTokenDto = jwtTokenProvider.createToken(loginRequestDto.getEmail(), member.get().getNickname());
 
-        RefreshToken refreshToken = RefreshToken.builder()
-                .token(jwtTokenDto.getRefreshToken())
-                .userEmail(loginRequestDto.getEmail())
-                .build();
+        JwtTokenDto jwtTokenDto = jwtTokenProvider.createToken(loginRequestDto.getEmail(), member.getNickname());
+
+        RefreshToken refreshToken = RefreshToken.builder().token(jwtTokenDto.getRefreshToken())
+                .userEmail(loginRequestDto.getEmail()).build();
 
         refreshTokenRepository.save(refreshToken);
 
@@ -73,23 +66,23 @@ public class MemberService {
 
         Claims refreshToken = jwtTokenProvider.getClaims(refreshTokenDto.getRefreshToken());
 
-        Optional<RefreshToken> userRefreshToken = refreshTokenRepository.findByUserEmail(refreshToken.getSubject());
-        Optional<Member> member = memberRepository.findByEmail(refreshToken.getSubject());
-
-        if (userRefreshToken.isEmpty() || member.isEmpty()) {
-            throw new UsernameNotFoundException("존재 하지 않는 유저 입니다.");
-        }
-
-        System.out.println(refreshTokenDto.getRefreshToken() + "," + userRefreshToken.get().getToken());
-
-        if (!jwtTokenProvider.validateToken(refreshTokenDto.getRefreshToken()) && !refreshTokenDto.getRefreshToken()
-                .equals(userRefreshToken.get().getToken())) {
+        if (!jwtTokenProvider.validateToken(refreshTokenDto.getRefreshToken())) {
             throw new IllegalArgumentException("잘못된 refresh token 입니다.");
         }
-        JwtTokenDto jwtTokenDto = jwtTokenProvider.createToken(refreshToken.getSubject(),
-                member.get().getNickname());
 
-        userRefreshToken.get().setToken(jwtTokenDto.getRefreshToken());
+        RefreshToken userRefreshToken = refreshTokenRepository.findByUserEmail(refreshToken.getSubject())
+                .orElseThrow(() -> new UsernameNotFoundException("존재 하지 않는 유저 입니다."));
+
+        Member member = memberRepository.findByEmail(refreshToken.getSubject())
+                .orElseThrow(() -> new UsernameNotFoundException("존재 하지 않는 유저 입니다."));
+
+        if (!refreshTokenDto.getRefreshToken().equals(userRefreshToken.getToken())) {
+            throw new IllegalArgumentException("잘못된 refresh token 입니다.");
+        }
+
+        JwtTokenDto jwtTokenDto = jwtTokenProvider.createToken(refreshToken.getSubject(), member.getNickname());
+
+        userRefreshToken.setToken(jwtTokenDto.getRefreshToken());
 
         return jwtTokenDto;
     }
