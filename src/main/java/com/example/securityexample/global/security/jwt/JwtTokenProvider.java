@@ -2,7 +2,7 @@ package com.example.securityexample.global.security.jwt;
 
 
 import com.example.securityexample.user.application.CustomUserDetailsService;
-import com.example.securityexample.user.domain.MemberUserDetails;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -13,14 +13,12 @@ import io.jsonwebtoken.security.Keys;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,7 +30,6 @@ public class JwtTokenProvider {
     private final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
     private final long accessTokenExpireSeconds;
     private final Key key;
-
     private final CustomUserDetailsService customUserDetailsService;
 
     public JwtTokenProvider(@Value("${jwt.secret}") String secretKey,
@@ -57,8 +54,8 @@ public class JwtTokenProvider {
 
         String refreshToken = Jwts.builder()
                 .setSubject(email)
-                .signWith(key, SignatureAlgorithm.HS512)
                 .claim("nickname", nickname)
+                .signWith(key, SignatureAlgorithm.HS512)
                 .setExpiration(expireTime)
                 .compact();
 
@@ -69,19 +66,19 @@ public class JwtTokenProvider {
     }
 
     public Authentication getAuthentication(String token) {
-        String email = Jwts
+        String email = getClaims(token).getSubject();
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+        User principal = new User(email, "", userDetails.getAuthorities());
+        return new UsernamePasswordAuthenticationToken(principal, "", userDetails.getAuthorities());
+    }
+
+    public Claims getClaims(String token) {
+        return Jwts
                 .parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
-
-        User principal = new User(email, "", userDetails.getAuthorities());
-
-        return new UsernamePasswordAuthenticationToken(principal, "", userDetails.getAuthorities());
+                .getBody();
     }
 
     public boolean validateToken(String token) {

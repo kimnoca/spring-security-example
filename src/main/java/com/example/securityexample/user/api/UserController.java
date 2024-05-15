@@ -3,6 +3,7 @@ package com.example.securityexample.user.api;
 
 import com.example.securityexample.user.application.MemberService;
 import com.example.securityexample.user.dto.LoginRequestDto;
+import com.example.securityexample.user.dto.RefreshTokenDto;
 import com.example.securityexample.user.dto.RegisterRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,8 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final MemberService memberService;
+
     @PostMapping("/login")
-    public ResponseEntity<?> newLogin(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto) {
         return ResponseEntity.status(HttpStatus.OK).body(memberService.login(loginRequestDto));
     }
 
@@ -27,4 +29,10 @@ public class UserController {
     public ResponseEntity<?> join(@RequestBody RegisterRequestDto registerRequestDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(memberService.signUp(registerRequestDto));
     }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<?> reissueAccessToken(@RequestBody RefreshTokenDto refreshTokenDto) {
+        return ResponseEntity.status(HttpStatus.OK).body(memberService.accessTokenReIssue(refreshTokenDto));
+    }
+
 }
