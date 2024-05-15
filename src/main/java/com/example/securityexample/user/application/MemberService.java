@@ -54,6 +54,14 @@ public class MemberService {
 
         JwtTokenDto jwtTokenDto = jwtTokenProvider.createToken(loginRequestDto.getEmail(), member.getNickname());
 
+        Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByUserEmail(
+                loginRequestDto.getEmail());
+
+        if (optionalRefreshToken.isPresent()) { // refresh token이 있으면 update 하고 return
+            optionalRefreshToken.get().setToken(jwtTokenDto.getRefreshToken());
+            return jwtTokenDto;
+        }
+
         RefreshToken refreshToken = RefreshToken.builder().token(jwtTokenDto.getRefreshToken())
                 .userEmail(loginRequestDto.getEmail()).build();
 
