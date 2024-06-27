@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -28,14 +27,14 @@ import org.springframework.stereotype.Component;
 public class JwtTokenProvider {
 
     private final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
-    private final long accessTokenExpireSeconds;
+    private final long tokenExpireSeconds;
     private final Key key;
     private final CustomUserDetailsService customUserDetailsService;
 
     public JwtTokenProvider(@Value("${jwt.secret}") String secretKey,
-                            @Value("${jwt.access-token-expire-seconds}") long accessTokenExpireSeconds,
+                            @Value("${jwt.token-expire-seconds}") long accessTokenExpireSeconds,
                             CustomUserDetailsService customUserDetailsService) {
-        this.accessTokenExpireSeconds = accessTokenExpireSeconds;
+        this.tokenExpireSeconds = accessTokenExpireSeconds;
         this.customUserDetailsService = customUserDetailsService;
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
@@ -43,20 +42,20 @@ public class JwtTokenProvider {
 
     public JwtTokenDto createToken(String email, String nickname) {
         long now = (new Date()).getTime();
-        Date expireTime = new Date(now + this.accessTokenExpireSeconds);
+        Date accessTokenExpireTime = new Date(now + this.tokenExpireSeconds);
+        Date refreshTokenExpireTime = new Date(now + (tokenExpireSeconds * 2 * 30));
 
         String accessToken = Jwts.builder()
                 .setSubject(email)
                 .claim("nickname", nickname)
                 .signWith(key, SignatureAlgorithm.HS512)
-                .setExpiration(expireTime)
+                .setExpiration(accessTokenExpireTime)
                 .compact();
 
         String refreshToken = Jwts.builder()
                 .setSubject(email)
-                .claim("nickname", nickname)
                 .signWith(key, SignatureAlgorithm.HS512)
-                .setExpiration(expireTime)
+                .setExpiration(refreshTokenExpireTime)
                 .compact();
 
         return JwtTokenDto.builder()
@@ -68,8 +67,7 @@ public class JwtTokenProvider {
     public Authentication getAuthentication(String token) {
         String email = getClaims(token).getSubject();
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
-        User principal = new User(email, "", userDetails.getAuthorities());
-        return new UsernamePasswordAuthenticationToken(principal, "", userDetails.getAuthorities());
+        return new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
     }
 
     public Claims getClaims(String token) {

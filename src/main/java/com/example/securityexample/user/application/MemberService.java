@@ -32,8 +32,6 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    //TODO : Exception Global Handler 구현
-
     public Member signUp(RegisterRequestDto registerRequestDto) {
 
         Member member = Member.builder().email(registerRequestDto.getEmail())
@@ -57,8 +55,8 @@ public class MemberService {
         Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByUserEmail(
                 loginRequestDto.getEmail());
 
-        if (optionalRefreshToken.isPresent()) { // refresh token이 있으면 update 하고 return
-            optionalRefreshToken.get().setToken(jwtTokenDto.getRefreshToken());
+        if (optionalRefreshToken.isPresent()) { // refresh token 이 있으면 update 하고 return
+            optionalRefreshToken.get().updateRefreshToken(jwtTokenDto.getRefreshToken());
             return jwtTokenDto;
         }
 
@@ -90,7 +88,7 @@ public class MemberService {
 
         JwtTokenDto jwtTokenDto = jwtTokenProvider.createToken(refreshToken.getSubject(), member.getNickname());
 
-        userRefreshToken.setToken(jwtTokenDto.getRefreshToken());
+        userRefreshToken.updateRefreshToken(jwtTokenDto.getRefreshToken());
 
         return jwtTokenDto;
     }
