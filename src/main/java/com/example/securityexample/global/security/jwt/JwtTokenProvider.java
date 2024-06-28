@@ -11,6 +11,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import java.security.Key;
 import java.util.Date;
 import org.slf4j.Logger;
@@ -81,18 +82,21 @@ public class JwtTokenProvider {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
-        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
+        } catch (SignatureException e) {
             logger.info("잘못된 JWT 서명입니다.");
             throw new JwtException(ErrorMessage.TOKEN_SIGNTURE_ERROR.getMessage());
+        } catch (MalformedJwtException e) {
+            logger.info("유효하지 않은 JWT 토큰");
+            throw new JwtException("유효하지 않은 JWT 토큰");
         } catch (ExpiredJwtException e) {
             logger.info("만료된 JWT 토큰입니다.");
             throw new JwtException(ErrorMessage.JWT_EXPIRE_ERROR.getMessage());
-        } catch (UnsupportedJwtException e) {
+        } catch (UnsupportedJwtException e) { // 이거랑
             logger.info("지원되지 않는 JWT 토큰입니다.");
             throw new JwtException(ErrorMessage.UNSUPPORTED_TOKEN_ERROR.getMessage());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) { // 이거는 안잡히지?
             logger.info("JWT 토큰이 잘못되었습니다.");
-            throw new JwtException(ErrorMessage.JWT_EXPIRE_ERROR.getMessage());
+            throw new JwtException(ErrorMessage.UNKNOWN_ERROR.getMessage());
         }
     }
 }
