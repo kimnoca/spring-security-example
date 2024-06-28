@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -64,9 +65,14 @@ public class JwtTokenProvider {
     }
 
     public Authentication getAuthentication(String token) {
-        String email = getClaims(token).getSubject();
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
-        return new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
+        try {
+            String email = getClaims(token).getSubject();
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+            return new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
+        } catch (UsernameNotFoundException e) {
+            throw new JwtException(ErrorMessage.USER_NOT_FOUND_ERROR.getMessage());
+        }
+
     }
 
     public Claims getClaims(String token) {

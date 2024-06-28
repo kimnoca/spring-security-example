@@ -3,6 +3,7 @@ package com.example.securityexample.user.application;
 
 import com.example.securityexample.global.security.jwt.JwtTokenDto;
 import com.example.securityexample.global.security.jwt.JwtTokenProvider;
+import com.example.securityexample.global.util.ErrorMessage;
 import com.example.securityexample.user.dao.MemberRepository;
 import com.example.securityexample.user.dao.RefreshTokenRepository;
 import com.example.securityexample.user.domain.Member;
@@ -10,6 +11,7 @@ import com.example.securityexample.user.domain.RefreshToken;
 import com.example.securityexample.user.dto.LoginRequestDto;
 import com.example.securityexample.user.dto.RefreshTokenDto;
 import com.example.securityexample.user.dto.RegisterRequestDto;
+import com.example.securityexample.user.exception.AlreadyExistUserException;
 import com.example.securityexample.user.type.Role;
 import io.jsonwebtoken.Claims;
 import java.util.Optional;
@@ -33,7 +35,7 @@ public class MemberService {
     public Member signUp(RegisterRequestDto registerRequestDto) {
 
         if (memberRepository.findByEmail(registerRequestDto.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 email 입니다.");
+            throw new AlreadyExistUserException(ErrorMessage.ALREADY_EXIST_USER_ERROR.getMessage());
         }
 
         Member member = Member.builder().email(registerRequestDto.getEmail())
@@ -46,10 +48,10 @@ public class MemberService {
     public JwtTokenDto login(LoginRequestDto loginRequestDto) {
 
         Member member = memberRepository.findByEmail(loginRequestDto.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("존재 하지 않는 유저 입니다."));
+                .orElseThrow(() -> new UsernameNotFoundException(ErrorMessage.USER_NOT_FOUND_ERROR.getMessage()));
 
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
-            throw new BadCredentialsException("올바르지 않은 비밀번호 입니다.");
+            throw new BadCredentialsException(ErrorMessage.BAD_CREDENTIALS_ERROR.getMessage());
         }
 
         JwtTokenDto jwtTokenDto = jwtTokenProvider.createToken(loginRequestDto.getEmail(), member.getNickname());

@@ -1,6 +1,5 @@
 package com.example.securityexample.global.security.jwt;
 
-import com.example.securityexample.global.util.ErrorMessage;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
