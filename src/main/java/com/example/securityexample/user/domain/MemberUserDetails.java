@@ -11,8 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Getter
 @AllArgsConstructor
 public class MemberUserDetails implements UserDetails {
-
-    Member member;
+    private Member member;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -1,8 +1,10 @@
 package com.example.securityexample.global.config;
 
+import com.example.securityexample.global.security.handler.UserAccessDeniedHandler;
+import com.example.securityexample.global.security.handler.UserAuthenticationEntryPoint;
 import com.example.securityexample.global.security.jwt.JwtAuthenticationFilter;
+import com.example.securityexample.global.security.jwt.JwtExceptionHandlingFilter;
 import com.example.securityexample.global.security.jwt.JwtTokenProvider;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +26,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtExceptionHandlingFilter jwtExceptionHandlingFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -44,8 +47,16 @@ public class SecurityConfig {
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // session 을 사용하지 않음
                 )
 
+                // Token 인증에 대한 filter 따로 필요
+
+                .exceptionHandling(
+                        exceptionHandling -> exceptionHandling.authenticationEntryPoint(
+                                new UserAuthenticationEntryPoint()).accessDeniedHandler(new UserAccessDeniedHandler()))
+
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
-                        UsernamePasswordAuthenticationFilter.class);  // JwtAuthenticationFilter 작동 후 UsernamePasswordAuthenticationFilter 변경
+                        UsernamePasswordAuthenticationFilter.class) // JwtAuthenticationFilter 작동 후 UsernamePasswordAuthenticationFilter 변경
+
+                .addFilterBefore(jwtExceptionHandlingFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

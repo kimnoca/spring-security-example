@@ -25,4 +25,8 @@ public class RefreshToken {
     public void updateRefreshToken(String newToken) {
         this.token = newToken;
     }
+
+    public boolean validateRefreshToken(String refreshToken) {
+        return this.token.equals(refreshToken);
+    }
 }

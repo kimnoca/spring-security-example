@@ -7,16 +7,14 @@ import com.example.securityexample.user.dao.MemberRepository;
 import com.example.securityexample.user.dao.RefreshTokenRepository;
 import com.example.securityexample.user.domain.Member;
 import com.example.securityexample.user.domain.RefreshToken;
-import com.example.securityexample.user.dto.RefreshTokenDto;
-import com.example.securityexample.user.type.Role;
 import com.example.securityexample.user.dto.LoginRequestDto;
+import com.example.securityexample.user.dto.RefreshTokenDto;
 import com.example.securityexample.user.dto.RegisterRequestDto;
-
+import com.example.securityexample.user.type.Role;
 import io.jsonwebtoken.Claims;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
-
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,6 +31,10 @@ public class MemberService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     public Member signUp(RegisterRequestDto registerRequestDto) {
+
+        if (memberRepository.findByEmail(registerRequestDto.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("이미 존재하는 email 입니다.");
+        }
 
         Member member = Member.builder().email(registerRequestDto.getEmail())
                 .password(passwordEncoder.encode(registerRequestDto.getPassword()))
@@ -82,7 +84,7 @@ public class MemberService {
         Member member = memberRepository.findByEmail(refreshToken.getSubject())
                 .orElseThrow(() -> new UsernameNotFoundException("존재 하지 않는 유저 입니다."));
 
-        if (!refreshTokenDto.getRefreshToken().equals(userRefreshToken.getToken())) {
+        if (!userRefreshToken.validateRefreshToken(refreshTokenDto.getRefreshToken())) {
             throw new IllegalArgumentException("잘못된 refresh token 입니다.");
         }
 

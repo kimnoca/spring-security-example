@@ -1,5 +1,6 @@
 package com.example.securityexample.global.security.jwt;
 
+import com.example.securityexample.global.util.ErrorMessage;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -24,7 +25,11 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         String token = resolveToken(httpServletRequest);
 
-        if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+        if (!StringUtils.hasText(token)) {
+            throw new JwtException(ErrorMessage.UNKNOWN_ERROR.getMessage());
+        }
+
+        if (jwtTokenProvider.validateToken(token)) {
             Authentication authentication = jwtTokenProvider.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
